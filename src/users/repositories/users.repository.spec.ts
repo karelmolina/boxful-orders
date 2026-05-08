@@ -30,24 +30,30 @@ describe('UsersRepository', () => {
     jest.clearAllMocks();
   });
 
+  const userPayload = {
+    firstName: 'Alice',
+    lastName: 'Smith',
+    gender: 'female',
+    dateOfBirth: new Date('1990-01-01'),
+    email: 'alice@example.com',
+    phoneNumber: '+50377777777',
+    passwordHash: 'hashed',
+  };
+
   describe('create', () => {
     it('should create a user and return it', async () => {
       const prismaUser = {
+        ...userPayload,
         id: 'user-id',
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       (prismaService.user!.create as jest.Mock).mockResolvedValue(prismaUser);
 
-      const result = await repository.create({
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
-      });
+      const result = await repository.create(userPayload);
 
       expect(prismaService.user!.create).toHaveBeenCalledWith({
-        data: { email: 'alice@example.com', passwordHash: 'hashed' },
+        data: userPayload,
       });
       expect(result).toEqual(prismaUser);
     });
@@ -56,33 +62,26 @@ describe('UsersRepository', () => {
       const error = { code: 'P2002', message: 'Unique constraint failed' };
       (prismaService.user!.create as jest.Mock).mockRejectedValue(error);
 
-      await expect(
-        repository.create({
-          email: 'alice@example.com',
-          passwordHash: 'hashed',
-        }),
-      ).rejects.toThrow(ConflictException);
+      await expect(repository.create(userPayload)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should rethrow unknown errors', async () => {
       const error = new Error('Unknown error');
       (prismaService.user!.create as jest.Mock).mockRejectedValue(error);
 
-      await expect(
-        repository.create({
-          email: 'alice@example.com',
-          passwordHash: 'hashed',
-        }),
-      ).rejects.toThrow('Unknown error');
+      await expect(repository.create(userPayload)).rejects.toThrow(
+        'Unknown error',
+      );
     });
   });
 
   describe('findByEmail', () => {
     it('should return user when found', async () => {
       const prismaUser = {
+        ...userPayload,
         id: 'user-id',
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -109,9 +108,8 @@ describe('UsersRepository', () => {
   describe('findById', () => {
     it('should return user when found', async () => {
       const prismaUser = {
+        ...userPayload,
         id: 'user-id',
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
         createdAt: new Date(),
         updatedAt: new Date(),
       };

@@ -27,18 +27,41 @@ describe('AuthController', () => {
     controller = module.get<AuthController>(AuthController);
   });
 
+  const registerDto = {
+    firstName: 'Alice',
+    lastName: 'Smith',
+    gender: 'female',
+    dateOfBirth: '1990-01-01',
+    email: 'alice@example.com',
+    phoneNumber: '+50377777777',
+    password: 'Secure123',
+    confirmPassword: 'Secure123',
+  };
+
   describe('register', () => {
     it('should delegate to authService.register', async () => {
-      const dto = { email: 'alice@example.com', password: 'Secure123' };
-      const expected = { id: 'user-id', email: 'alice@example.com' };
+      const expected = {
+        id: 'user-id',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: new Date('1990-01-01'),
+        email: 'alice@example.com',
+        phoneNumber: '+50377777777',
+      };
       authService.register!.mockResolvedValue(expected);
 
-      const result = await controller.register(dto);
+      const result = await controller.register(registerDto);
 
-      expect(authService.register).toHaveBeenCalledWith(
-        'alice@example.com',
-        'Secure123',
-      );
+      expect(authService.register).toHaveBeenCalledWith({
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: '1990-01-01',
+        email: 'alice@example.com',
+        phoneNumber: '+50377777777',
+        password: 'Secure123',
+      });
       expect(result).toEqual(expected);
     });
   });
@@ -49,8 +72,8 @@ describe('AuthController', () => {
       const user = { id: 'user-id', email: 'alice@example.com' };
       const token = { access_token: 'jwt-token' };
 
-      authService.validateUser!.mockResolvedValue(user);
-      authService.login!.mockResolvedValue(token);
+      authService.validateUser!.mockResolvedValue(user as any);
+      authService.login!.mockResolvedValue(token as any);
 
       const result = await controller.login(dto);
 

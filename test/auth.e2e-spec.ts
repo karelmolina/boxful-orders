@@ -2,12 +2,23 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { JwtAuthGuard } from './../src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from './../src/auth/guards/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
 import { getAuthToken } from './helpers/auth-helper';
 import { DatabaseService } from './../src/database/database.service';
 import { InMemoryUsersRepository } from './../src/users/repositories/in-memory-users.repository';
 import { USERS_REPOSITORY } from './../src/users/repositories/users.repository.interface';
+
+const validRegisterPayload = {
+  firstName: 'Alice',
+  lastName: 'Smith',
+  gender: 'female',
+  dateOfBirth: '1990-01-01',
+  email: 'alice@example.com',
+  phoneNumber: '+50377777777',
+  password: 'Secure123',
+  confirmPassword: 'Secure123',
+};
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -45,11 +56,13 @@ describe('AuthController (e2e)', () => {
     it('should register a new user', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'alice@example.com', password: 'Secure123' })
+        .send(validRegisterPayload)
         .expect(201)
         .expect((res) => {
           expect(res.body).toHaveProperty('id');
           expect(res.body).toHaveProperty('email', 'alice@example.com');
+          expect(res.body).toHaveProperty('firstName', 'Alice');
+          expect(res.body).toHaveProperty('lastName', 'Smith');
           expect(res.body).not.toHaveProperty('password');
           expect(res.body).not.toHaveProperty('passwordHash');
         });
@@ -58,26 +71,37 @@ describe('AuthController (e2e)', () => {
     it('should return 400 for invalid email', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'not-an-email', password: 'Secure123' })
+        .send({ ...validRegisterPayload, email: 'not-an-email' })
         .expect(400);
     });
 
     it('should return 400 for short password', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'alice@example.com', password: 'short' })
+        .send({
+          ...validRegisterPayload,
+          password: 'short',
+          confirmPassword: 'short',
+        })
+        .expect(400);
+    });
+
+    it('should return 400 when passwords do not match', () => {
+      return request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ ...validRegisterPayload, confirmPassword: 'DifferentPass' })
         .expect(400);
     });
 
     it('should return 409 for duplicate email', async () => {
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'alice@example.com', password: 'Secure123' })
+        .send(validRegisterPayload)
         .expect(201);
 
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'alice@example.com', password: 'Secure123' })
+        .send({ ...validRegisterPayload, email: 'alice@example.com' })
         .expect(409);
     });
   });
@@ -86,7 +110,7 @@ describe('AuthController (e2e)', () => {
     it('should return access_token on valid credentials', async () => {
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'alice@example.com', password: 'Secure123' });
+        .send(validRegisterPayload);
 
       const response = await request(app.getHttpServer())
         .post('/auth/login')
@@ -100,7 +124,7 @@ describe('AuthController (e2e)', () => {
     it('should return 401 for wrong password', async () => {
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'alice@example.com', password: 'Secure123' });
+        .send(validRegisterPayload);
 
       return request(app.getHttpServer())
         .post('/auth/login')

@@ -8,37 +8,36 @@ describe('InMemoryUsersRepository', () => {
     repository = new InMemoryUsersRepository();
   });
 
+  const userPayload = {
+    firstName: 'Alice',
+    lastName: 'Smith',
+    gender: 'female',
+    dateOfBirth: new Date('1990-01-01'),
+    email: 'alice@example.com',
+    phoneNumber: '+50377777777',
+    passwordHash: 'hashed',
+  };
+
   describe('create', () => {
     it('should create a user with generated id', async () => {
-      const user = await repository.create({
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
-      });
+      const user = await repository.create(userPayload);
       expect(user.email).toBe('alice@example.com');
+      expect(user.firstName).toBe('Alice');
       expect(user.passwordHash).toBe('hashed');
       expect(user.id).toBeDefined();
     });
 
     it('should throw ConflictException for duplicate email', async () => {
-      await repository.create({
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
-      });
+      await repository.create(userPayload);
       await expect(
-        repository.create({
-          email: 'alice@example.com',
-          passwordHash: 'other',
-        }),
+        repository.create({ ...userPayload, passwordHash: 'other' }),
       ).rejects.toThrow(ConflictException);
     });
   });
 
   describe('findByEmail', () => {
     it('should return user when found', async () => {
-      await repository.create({
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
-      });
+      await repository.create(userPayload);
       const user = await repository.findByEmail('alice@example.com');
       expect(user).toBeDefined();
       expect(user?.email).toBe('alice@example.com');
@@ -52,10 +51,7 @@ describe('InMemoryUsersRepository', () => {
 
   describe('findById', () => {
     it('should return user when found', async () => {
-      const created = await repository.create({
-        email: 'alice@example.com',
-        passwordHash: 'hashed',
-      });
+      const created = await repository.create(userPayload);
       const user = await repository.findById(created.id);
       expect(user).toBeDefined();
       expect(user?.id).toBe(created.id);

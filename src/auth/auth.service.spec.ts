@@ -44,21 +44,48 @@ describe('AuthService', () => {
     it('should hash password and create user', async () => {
       const mockUser = {
         id: 'user-id',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: new Date('1990-01-01'),
         email: 'alice@example.com',
+        phoneNumber: '+50377777777',
         passwordHash: 'hashed-password',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       usersService.create!.mockResolvedValue(mockUser);
 
-      const result = await service.register('alice@example.com', 'Secure123');
+      const result = await service.register({
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: '1990-01-01',
+        email: 'alice@example.com',
+        phoneNumber: '+50377777777',
+        password: 'Secure123',
+      });
 
       expect(bcrypt.hash).toHaveBeenCalledWith('Secure123', 12);
-      expect(usersService.create).toHaveBeenCalledWith(
-        'alice@example.com',
-        'hashed-password',
-      );
+      expect(usersService.create).toHaveBeenCalledWith({
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: new Date('1990-01-01'),
+        email: 'alice@example.com',
+        phoneNumber: '+50377777777',
+        passwordHash: 'hashed-password',
+      });
       expect(result).toEqual({
         id: 'user-id',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: mockUser.dateOfBirth,
         email: 'alice@example.com',
+        phoneNumber: '+50377777777',
+        createdAt: mockUser.createdAt,
+        updatedAt: mockUser.updatedAt,
       });
     });
 
@@ -68,7 +95,15 @@ describe('AuthService', () => {
       );
 
       await expect(
-        service.register('alice@example.com', 'Secure123'),
+        service.register({
+          firstName: 'Alice',
+          lastName: 'Smith',
+          gender: 'female',
+          dateOfBirth: '1990-01-01',
+          email: 'alice@example.com',
+          phoneNumber: '+50377777777',
+          password: 'Secure123',
+        }),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -77,8 +112,15 @@ describe('AuthService', () => {
     it('should return user without passwordHash on valid credentials', async () => {
       const mockUser = {
         id: 'user-id',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: new Date('1990-01-01'),
         email: 'alice@example.com',
+        phoneNumber: '+50377777777',
         passwordHash: 'hashed-password',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       usersService.findByEmail!.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -90,7 +132,14 @@ describe('AuthService', () => {
 
       expect(result).toEqual({
         id: 'user-id',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: mockUser.dateOfBirth,
         email: 'alice@example.com',
+        phoneNumber: '+50377777777',
+        createdAt: mockUser.createdAt,
+        updatedAt: mockUser.updatedAt,
       });
       expect(bcrypt.compare).toHaveBeenCalledWith(
         'Secure123',
@@ -113,8 +162,15 @@ describe('AuthService', () => {
     it('should return null when password does not match', async () => {
       const mockUser = {
         id: 'user-id',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: new Date('1990-01-01'),
         email: 'alice@example.com',
+        phoneNumber: '+50377777777',
         passwordHash: 'hashed-password',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       usersService.findByEmail!.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
@@ -130,7 +186,17 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return access_token', async () => {
-      const user = { id: 'user-id', email: 'alice@example.com' };
+      const user = {
+        id: 'user-id',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        gender: 'female',
+        dateOfBirth: new Date('1990-01-01'),
+        email: 'alice@example.com',
+        phoneNumber: '+50377777777',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
       const result = service.login(user);
 

@@ -12,10 +12,13 @@ export class UsersService {
     private readonly usersRepository: IUsersRepository,
   ) {}
 
-  async create(email: string, passwordHash: string): Promise<User> {
+  async create(
+    userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<User> {
     try {
-      return await this.usersRepository.create({ email, passwordHash });
+      return await this.usersRepository.create(userData);
     } catch (error) {
+      console.log(error);
       if (error instanceof ConflictException) {
         throw error;
       }

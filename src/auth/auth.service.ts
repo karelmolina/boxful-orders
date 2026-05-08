@@ -11,13 +11,25 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(
-    email: string,
-    password: string,
-  ): Promise<{ id: string; email: string }> {
+  async register(userData: {
+    firstName: string;
+    lastName: string;
+    gender: string;
+    dateOfBirth: string;
+    email: string;
+    phoneNumber: string;
+    password: string;
+  }): Promise<Omit<User, 'passwordHash'>> {
+    const { password, ...rest } = userData;
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await this.usersService.create(email, passwordHash);
-    return { id: user.id, email: user.email };
+    const user = await this.usersService.create({
+      ...rest,
+      dateOfBirth: new Date(rest.dateOfBirth),
+      passwordHash,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _, ...result } = user;
+    return result;
   }
 
   async validateUser(

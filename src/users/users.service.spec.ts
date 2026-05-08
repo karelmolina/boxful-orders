@@ -66,25 +66,36 @@ describe('UsersService', () => {
     repository.clear();
   });
 
+  const userPayload = {
+    firstName: 'Alice',
+    lastName: 'Smith',
+    gender: 'female',
+    dateOfBirth: new Date('1990-01-01'),
+    email: 'alice@example.com',
+    phoneNumber: '+50377777777',
+    passwordHash: 'hashed-pass',
+  };
+
   describe('create', () => {
     it('should create a user and return it', async () => {
-      const user = await service.create('alice@example.com', 'hashed-pass');
+      const user = await service.create(userPayload);
       expect(user.email).toBe('alice@example.com');
+      expect(user.firstName).toBe('Alice');
       expect(user.passwordHash).toBe('hashed-pass');
       expect(user.id).toBeDefined();
     });
 
     it('should throw ConflictException for duplicate email', async () => {
-      await service.create('alice@example.com', 'hashed-pass');
+      await service.create(userPayload);
       await expect(
-        service.create('alice@example.com', 'other-hash'),
+        service.create({ ...userPayload, passwordHash: 'other-hash' }),
       ).rejects.toThrow(ConflictException);
     });
   });
 
   describe('findByEmail', () => {
     it('should return user when found', async () => {
-      await service.create('alice@example.com', 'hashed-pass');
+      await service.create(userPayload);
       const user = await service.findByEmail('alice@example.com');
       expect(user).toBeDefined();
       expect(user?.email).toBe('alice@example.com');
@@ -98,7 +109,7 @@ describe('UsersService', () => {
 
   describe('findById', () => {
     it('should return user when found', async () => {
-      const created = await service.create('alice@example.com', 'hashed-pass');
+      const created = await service.create(userPayload);
       const user = await service.findById(created.id);
       expect(user).toBeDefined();
       expect(user?.id).toBe(created.id);

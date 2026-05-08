@@ -13,8 +13,13 @@ export class UsersRepository implements IUsersRepository {
     try {
       const prismaUser = await this.prisma.user.create({ data: userData });
       return prismaUser;
-    } catch (error: any) {
-      if (error?.code === 'P2002') {
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
         throw new ConflictException('Email already registered');
       }
       throw error;
