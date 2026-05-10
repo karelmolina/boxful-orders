@@ -203,6 +203,8 @@ describe('AuthService', () => {
       expect(jwtService.sign).toHaveBeenCalledWith({
         sub: 'user-id',
         email: 'alice@example.com',
+        firstName: 'Alice',
+        lastName: 'Smith',
       });
       expect(result).toEqual({ access_token: 'mocked-jwt-token' });
     });

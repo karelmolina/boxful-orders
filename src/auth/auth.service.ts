@@ -52,7 +52,12 @@ export class AuthService {
   }
 
   login(user: Omit<User, 'passwordHash'>): { access_token: string } {
-    const payload = { sub: user.id, email: user.email };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
     return {
       access_token: this.jwtService.sign(payload),
     };

@@ -8,35 +8,48 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateStatusWebhookDto } from './dto/update-status-webhook.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { Public } from '../auth/public.decorator';
 
-class UpdateOrderStatusDto {
-  status: string;
-}
-
+@ApiTags('Orders')
+@ApiBearerAuth()
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new order' })
+  @ApiResponse({ status: 201, description: 'Order created successfully' })
   async create(@Body() dto: CreateOrderDto) {
     return this.ordersService.create(dto);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all orders' })
+  @ApiResponse({ status: 200, description: 'Returns list of orders' })
   async findAll() {
     return this.ordersService.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get order by ID' })
+  @ApiResponse({ status: 200, description: 'Returns order details' })
   async findById(@Param('id') id: string) {
     return this.ordersService.findById(id);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update order status' })
+  @ApiResponse({ status: 200, description: 'Order status updated' })
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
@@ -51,6 +64,8 @@ export class OrdersController {
   @Public()
   @Patch('webhook/update-status')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update order status via webhook' })
+  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
   async updateStatusWebhook(@Body() dto: UpdateStatusWebhookDto) {
     return this.ordersService.updateStatusFromWebhook(dto);
   }
