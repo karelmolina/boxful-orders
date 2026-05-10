@@ -18,6 +18,8 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateStatusWebhookDto } from './dto/update-status-webhook.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { SettlementBreakdownDto } from './dto/settlement-breakdown.dto';
+import { TotalSettlementDto } from './dto/total-settlement.dto';
 import { Public } from '../auth/public.decorator';
 
 @ApiTags('Orders')
@@ -45,6 +47,20 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'Returns order details' })
   async findById(@Param('id') id: string) {
     return this.ordersService.findById(id);
+  }
+
+  @Get(':id/settlement')
+  @ApiOperation({ summary: 'Get settlement breakdown for an order' })
+  @ApiResponse({ status: 200, description: 'Returns settlement breakdown', type: SettlementBreakdownDto })
+  async getSettlement(@Param('id') id: string) {
+    return this.ordersService.getSettlement(id);
+  }
+
+  @Get('settlement/total')
+  @ApiOperation({ summary: 'Get total settlement across all orders' })
+  @ApiResponse({ status: 200, description: 'Returns total settlement summary', type: TotalSettlementDto })
+  async getTotalSettlement() {
+    return this.ordersService.getTotalSettlement();
   }
 
   @Patch(':id')

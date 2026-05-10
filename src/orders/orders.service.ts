@@ -11,6 +11,8 @@ import {
 import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateStatusWebhookDto } from './dto/update-status-webhook.dto';
+import { SettlementBreakdownDto } from './dto/settlement-breakdown.dto';
+import { TotalSettlementDto } from './dto/total-settlement.dto';
 
 const MAX_COD_COMMISSION = 25.0;
 
@@ -64,6 +66,67 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
     return order;
+  }
+
+  async getSettlement(id: string): Promise<SettlementBreakdownDto> {
+    const order = await this.findById(id);
+
+    const collectedAmount = order.actualRecollectedAmount ??
+      (order.isCOD ? order.settlementAmount + order.shippingCost + order.commissionCOD : 0);
+
+    const expenses: SettlementBreakdownDto['expenses'] = [
+      { concept: 'Costo de envío', amount: -order.shippingCost },
+    ];
+
+    if (order.isCOD && order.commissionCOD > 0) {
+      expenses.push({
+        concept: 'Comisión por COD (0.01%)',
+        amount: -order.commissionCOD,
+      });
+    }
+
+    return {
+      orderId: order.id,
+      isCOD: order.isCOD,
+      collectedAmount,
+      expenses,
+      settlementAmount: order.settlementAmount,
+    };
+  }
+
+  async getTotalSettlement(): Promise<TotalSettlementDto> {
+    const orders = await this.ordersRepository.findAll();
+
+    let totalSettlement = 0;
+    let totalCollected = 0;
+    let totalShippingCosts = 0;
+    let totalCommissionCOD = 0;
+    let codOrdersCount = 0;
+    let nonCodOrdersCount = 0;
+
+    for (const order of orders) {
+      totalSettlement += order.settlementAmount;
+      totalShippingCosts += order.shippingCost;
+      totalCommissionCOD += order.commissionCOD;
+
+      if (order.isCOD) {
+        codOrdersCount++;
+        totalCollected += order.actualRecollectedAmount ??
+          (order.settlementAmount + order.shippingCost + order.commissionCOD);
+      } else {
+        nonCodOrdersCount++;
+      }
+    }
+
+    return {
+      totalOrders: orders.length,
+      totalSettlement,
+      totalCollected,
+      totalShippingCosts,
+      totalCommissionCOD,
+      codOrdersCount,
+      nonCodOrdersCount,
+    };
   }
 
   async cancel(id: string): Promise<Order> {
