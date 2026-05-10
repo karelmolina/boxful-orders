@@ -35,11 +35,9 @@ export class OrdersService {
     }
 
     const productTotal = dto.expectedAmount ?? 0;
-    const commissionCOD = dto.isCOD
-      ? Math.min(productTotal * 0.0001, MAX_COD_COMMISSION)
-      : 0;
+    const commissionCOD = 0; // se calcula sobre el monto real recolectado, no sobre estimado
     const settlementAmount = dto.isCOD
-      ? productTotal - shippingCost - commissionCOD
+      ? productTotal - shippingCost
       : -shippingCost;
 
     return this.ordersRepository.create({
@@ -105,6 +103,8 @@ export class OrdersService {
     let nonCodOrdersCount = 0;
 
     for (const order of orders) {
+      if (order.status === 'CANCELLED') continue;
+
       totalSettlement += order.settlementAmount;
       totalShippingCosts += order.shippingCost;
       totalCommissionCOD += order.commissionCOD;
@@ -142,13 +142,14 @@ export class OrdersService {
   async updateStatusFromWebhook(dto: UpdateStatusWebhookDto): Promise<Order> {
     const order = await this.findById(dto.orderId);
     let settlementAmount = order.settlementAmount;
+    let commissionCOD = order.commissionCOD;
 
     if (
       dto.status === 'DELIVERED' &&
       order.isCOD &&
       dto.actualRecollectedAmount !== undefined
     ) {
-      const commissionCOD = Math.min(
+      commissionCOD = Math.min(
         dto.actualRecollectedAmount * 0.0001,
         MAX_COD_COMMISSION,
       );
@@ -160,6 +161,7 @@ export class OrdersService {
       status: dto.status,
       actualRecollectedAmount: dto.actualRecollectedAmount,
       settlementAmount,
+      commissionCOD,
     });
   }
 }

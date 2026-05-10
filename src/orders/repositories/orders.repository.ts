@@ -62,6 +62,9 @@ export class OrdersRepository implements IOrdersRepository {
         ...(data.settlementAmount !== undefined && {
           settlementAmount: data.settlementAmount,
         }),
+        ...(data.commissionCOD !== undefined && {
+          commissionCOD: data.commissionCOD,
+        }),
       },
     });
     return this.mapToEntity(order);

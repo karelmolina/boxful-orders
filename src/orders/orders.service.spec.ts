@@ -61,6 +61,9 @@ class MockOrdersRepository implements IOrdersRepository {
     if (data.settlementAmount !== undefined) {
       order.settlementAmount = data.settlementAmount;
     }
+    if (data.commissionCOD !== undefined) {
+      order.commissionCOD = data.commissionCOD;
+    }
     order.updatedAt = new Date();
     return order;
   }
@@ -126,7 +129,7 @@ describe('OrdersService', () => {
       expect(order.status).toBe('PENDING');
     });
 
-    it('should create COD order with commission capped at 25', async () => {
+    it('should create COD order with commission 0 (calculated on delivery)', async () => {
       repository.seedShippingCost(1, 5.0);
       const dto: CreateOrderDto = {
         ...baseDto,
@@ -134,11 +137,11 @@ describe('OrdersService', () => {
         expectedAmount: 1_000_000.0,
       };
       const order = await service.create(dto);
-      expect(order.commissionCOD).toBe(25.0);
-      expect(order.settlementAmount).toBeCloseTo(1_000_000.0 - 5.0 - 25.0, 5);
+      expect(order.commissionCOD).toBe(0); // comisión se calcula al entregar
+      expect(order.settlementAmount).toBeCloseTo(1_000_000.0 - 5.0, 5);
     });
 
-    it('should create COD order with commission at 0.01% when below cap', async () => {
+    it('should create COD order with expected amount below cap', async () => {
       repository.seedShippingCost(1, 5.0);
       const dto: CreateOrderDto = {
         ...baseDto,
@@ -146,8 +149,8 @@ describe('OrdersService', () => {
         expectedAmount: 100.0,
       };
       const order = await service.create(dto);
-      expect(order.commissionCOD).toBeCloseTo(0.01, 5);
-      expect(order.settlementAmount).toBeCloseTo(100.0 - 5.0 - 0.01, 5);
+      expect(order.commissionCOD).toBe(0); // comisión se calcula al entregar
+      expect(order.settlementAmount).toBeCloseTo(100.0 - 5.0, 5);
     });
 
     it('should throw BadRequestException when shipping cost not found', async () => {
@@ -203,13 +206,14 @@ describe('OrdersService', () => {
   });
 
   describe('updateStatusFromWebhook', () => {
-    it('should recalculate settlement for COD DELIVERED with actual amount', async () => {
+    it('should recalculate settlement and commission for COD DELIVERED with actual amount', async () => {
       repository.seedShippingCost(1, 5.0);
       const created = await service.create({
         ...baseDto,
         isCOD: true,
         expectedAmount: 8000.0,
       });
+      expect(created.commissionCOD).toBe(0); // sin comisión al crear
       const dto: UpdateStatusWebhookDto = {
         orderId: created.id,
         status: 'DELIVERED',
@@ -218,6 +222,7 @@ describe('OrdersService', () => {
       const updated = await service.updateStatusFromWebhook(dto);
       expect(updated.status).toBe('DELIVERED');
       expect(updated.actualRecollectedAmount).toBe(8000.0);
+      expect(updated.commissionCOD).toBeCloseTo(0.8, 5);
       expect(updated.settlementAmount).toBeCloseTo(8000.0 - 5.0 - 0.8, 5);
     });
 

@@ -7,7 +7,7 @@ RUN apk add --no-cache python3 make g++
 
 RUN npm install -g pnpm
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml .npmrc ./
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 

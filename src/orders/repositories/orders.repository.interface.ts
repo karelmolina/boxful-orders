@@ -17,6 +17,7 @@ export interface UpdateStatusInput {
   status: string;
   actualRecollectedAmount?: number;
   settlementAmount?: number;
+  commissionCOD?: number;
 }
 
 export interface IOrdersRepository {

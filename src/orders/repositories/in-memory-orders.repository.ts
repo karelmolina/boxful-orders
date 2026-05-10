@@ -67,6 +67,9 @@ export class InMemoryOrdersRepository implements IOrdersRepository {
     if (data.settlementAmount !== undefined) {
       order.settlementAmount = data.settlementAmount;
     }
+    if (data.commissionCOD !== undefined) {
+      order.commissionCOD = data.commissionCOD;
+    }
     order.updatedAt = new Date();
     return Promise.resolve(order);
   }
