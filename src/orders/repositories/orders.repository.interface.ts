@@ -2,6 +2,7 @@ import { Order } from '../entities/order.entity';
 
 export interface CreateOrderInput {
   userId?: string;
+  pickupAddress: string;
   recipient: Order['recipient'];
   products: Order['products'];
   isCOD: boolean;

@@ -11,7 +11,6 @@ import {
   IsNumber,
   Min,
   IsOptional,
-  IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -25,6 +24,10 @@ export class OrderRecipientDto {
   @IsString()
   @MinLength(8)
   phone: string;
+
+  @ApiProperty({ example: 'john@example.com' })
+  @IsString()
+  email: string;
 
   @ApiProperty({ example: '123 Main St' })
   @IsString()
@@ -42,27 +45,43 @@ export class OrderRecipientDto {
   @ApiProperty({ example: '10001' })
   @IsString()
   zipCode: string;
+
+  @ApiPropertyOptional({ example: 'Near Central Park' })
+  @IsOptional()
+  @IsString()
+  referencePoint?: string;
+
+  @ApiPropertyOptional({ example: 'Call before delivery' })
+  @IsOptional()
+  @IsString()
+  instructions?: string;
 }
 
 export class OrderProductDto {
-  @ApiProperty({ example: 'Product A' })
-  @IsString()
-  name: string;
-
-  @ApiProperty({ example: 2 })
-  @IsInt()
-  @Min(1)
-  quantity: number;
-
-  @ApiProperty({ example: 29.99 })
+  @ApiProperty({ example: 15, description: 'Length in cm' })
   @IsNumber()
-  @Min(0.01)
-  unitPrice: number;
+  @Min(0)
+  length: number;
 
-  @ApiProperty({ example: 1.5 })
+  @ApiProperty({ example: 15, description: 'Height in cm' })
+  @IsNumber()
+  @Min(0)
+  height: number;
+
+  @ApiProperty({ example: 15, description: 'Width in cm' })
+  @IsNumber()
+  @Min(0)
+  width: number;
+
+  @ApiProperty({ example: 3, description: 'Weight in pounds' })
   @IsNumber()
   @Min(0)
   weight: number;
+
+  @ApiProperty({ example: 'iPhone 14 Pro Max' })
+  @IsString()
+  @MinLength(1)
+  content: string;
 }
 
 export class CreateOrderDto {
@@ -70,6 +89,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   userId?: string;
+
+  @ApiProperty({ example: '123 Pickup St' })
+  @IsString()
+  @MinLength(5)
+  pickupAddress: string;
 
   @ApiProperty({ type: OrderRecipientDto })
   @ValidateNested()
@@ -95,4 +119,13 @@ export class CreateOrderDto {
   @IsString()
   @IsIn(['STANDARD', 'EXPRESS'])
   shippingType: string;
+
+  @ApiPropertyOptional({
+    example: 55.0,
+    description: 'Expected package value for COD calculations',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  expectedAmount?: number;
 }

@@ -32,10 +32,7 @@ export class OrdersService {
       );
     }
 
-    const productTotal = dto.products.reduce(
-      (sum, p) => sum + p.quantity * p.unitPrice,
-      0,
-    );
+    const productTotal = dto.expectedAmount ?? 0;
     const commissionCOD = dto.isCOD
       ? Math.min(productTotal * 0.0001, MAX_COD_COMMISSION)
       : 0;
@@ -45,6 +42,7 @@ export class OrdersService {
 
     return this.ordersRepository.create({
       userId: dto.userId,
+      pickupAddress: dto.pickupAddress,
       recipient: dto.recipient,
       products: dto.products,
       isCOD: dto.isCOD,

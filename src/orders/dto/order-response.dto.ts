@@ -8,6 +8,9 @@ export class OrderRecipientResponseDto {
   phone: string;
 
   @ApiProperty()
+  email: string;
+
+  @ApiProperty()
   address: string;
 
   @ApiProperty()
@@ -18,20 +21,29 @@ export class OrderRecipientResponseDto {
 
   @ApiProperty()
   zipCode: string;
+
+  @ApiProperty({ nullable: true })
+  referencePoint?: string;
+
+  @ApiProperty({ nullable: true })
+  instructions?: string;
 }
 
 export class OrderProductResponseDto {
   @ApiProperty()
-  name: string;
+  length: number;
 
   @ApiProperty()
-  quantity: number;
+  height: number;
 
   @ApiProperty()
-  unitPrice: number;
+  width: number;
 
   @ApiProperty()
   weight: number;
+
+  @ApiProperty()
+  content: string;
 }
 
 export class OrderResponseDto {
@@ -40,6 +52,9 @@ export class OrderResponseDto {
 
   @ApiProperty({ nullable: true })
   userId: string | null;
+
+  @ApiProperty()
+  pickupAddress: string;
 
   @ApiProperty({ type: OrderRecipientResponseDto })
   recipient: OrderRecipientResponseDto;

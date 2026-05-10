@@ -1,22 +1,27 @@
 export interface OrderRecipient {
   name: string;
   phone: string;
+  email: string;
   address: string;
   city: string;
   state: string;
   zipCode: string;
+  referencePoint?: string;
+  instructions?: string;
 }
 
 export interface OrderProduct {
-  name: string;
-  quantity: number;
-  unitPrice: number;
+  length: number;
+  height: number;
+  width: number;
   weight: number;
+  content: string;
 }
 
 export class Order {
   id: string;
   userId: string | null;
+  pickupAddress: string;
   recipient: OrderRecipient;
   products: OrderProduct[];
   isCOD: boolean;

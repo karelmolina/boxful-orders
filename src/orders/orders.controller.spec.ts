@@ -41,7 +41,9 @@ describe('OrdersController', () => {
       state: 'State',
       zipCode: '12345',
     },
-    products: [{ name: 'Widget', quantity: 1, unitPrice: 10.0, weight: 1.0 }],
+    products: [
+      { length: 15, height: 15, width: 15, weight: 3, content: 'Widget' },
+    ],
     isCOD: false,
     deliveryDate: new Date(),
     shippingType: 'STANDARD',

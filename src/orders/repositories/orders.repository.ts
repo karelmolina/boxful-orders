@@ -14,6 +14,7 @@ export class OrdersRepository implements IOrdersRepository {
 
   async create(data: CreateOrderInput): Promise<Order> {
     const createData: Prisma.OrderCreateInput = {
+      pickupAddress: data.pickupAddress,
       recipient: data.recipient as unknown as Prisma.InputJsonValue,
       products: data.products as unknown as Prisma.InputJsonValue,
       isCOD: data.isCOD,
@@ -71,6 +72,7 @@ export class OrdersRepository implements IOrdersRepository {
   ): Order {
     return {
       ...prismaOrder,
+      pickupAddress: prismaOrder.pickupAddress ?? '',
       recipient: prismaOrder.recipient as unknown as OrderRecipient,
       products: prismaOrder.products as unknown as OrderProduct[],
     };

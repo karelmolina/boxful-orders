@@ -35,6 +35,7 @@ describe('OrdersRepository', () => {
   });
 
   const createInput: CreateOrderInput = {
+    pickupAddress: '123 Pickup St',
     recipient: {
       name: 'Alice',
       phone: '+50377777777',
@@ -43,7 +44,9 @@ describe('OrdersRepository', () => {
       state: 'State',
       zipCode: '12345',
     },
-    products: [{ name: 'Widget', quantity: 2, unitPrice: 10.5, weight: 1.2 }],
+    products: [
+      { length: 15, height: 15, width: 15, weight: 3, content: 'Widget' },
+    ],
     isCOD: false,
     deliveryDate: new Date('2026-05-11'),
     shippingType: 'STANDARD',

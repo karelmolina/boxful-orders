@@ -108,7 +108,9 @@ describe('OrdersService', () => {
       state: 'State',
       zipCode: '12345',
     },
-    products: [{ name: 'Widget', quantity: 2, unitPrice: 10.0, weight: 1.0 }],
+    products: [
+      { length: 15, height: 15, width: 15, weight: 3, content: 'Widget' },
+    ],
     isCOD: false,
     deliveryDate: '2026-05-11',
     shippingType: 'STANDARD',
@@ -119,7 +121,7 @@ describe('OrdersService', () => {
       repository.seedShippingCost(1, 5.0);
       const order = await service.create(baseDto);
       expect(order.shippingCost).toBe(5.0);
-      expect(order.settlementAmount).toBe(25.0); // product total 20 + shipping 5
+      expect(order.settlementAmount).toBe(5.0); // expectedAmount is undefined so productTotal = 0 + shipping 5
       expect(order.commissionCOD).toBe(0);
       expect(order.status).toBe('PENDING');
     });
@@ -129,14 +131,7 @@ describe('OrdersService', () => {
       const dto: CreateOrderDto = {
         ...baseDto,
         isCOD: true,
-        products: [
-          {
-            name: 'Expensive',
-            quantity: 1,
-            unitPrice: 1_000_000.0,
-            weight: 1.0,
-          },
-        ],
+        expectedAmount: 1_000_000.0,
       };
       const order = await service.create(dto);
       expect(order.commissionCOD).toBe(25.0);
@@ -148,9 +143,7 @@ describe('OrdersService', () => {
       const dto: CreateOrderDto = {
         ...baseDto,
         isCOD: true,
-        products: [
-          { name: 'Cheap', quantity: 1, unitPrice: 100.0, weight: 1.0 },
-        ],
+        expectedAmount: 100.0,
       };
       const order = await service.create(dto);
       expect(order.commissionCOD).toBeCloseTo(0.01, 5);
@@ -215,9 +208,7 @@ describe('OrdersService', () => {
       const created = await service.create({
         ...baseDto,
         isCOD: true,
-        products: [
-          { name: 'Widget', quantity: 1, unitPrice: 8000.0, weight: 1.0 },
-        ],
+        expectedAmount: 8000.0,
       });
       const dto: UpdateStatusWebhookDto = {
         orderId: created.id,
@@ -240,7 +231,7 @@ describe('OrdersService', () => {
       };
       const updated = await service.updateStatusFromWebhook(dto);
       expect(updated.status).toBe('DELIVERED');
-      expect(updated.settlementAmount).toBe(25.0); // product total 20 + shipping 5
+      expect(updated.settlementAmount).toBe(5.0); // expectedAmount is undefined so productTotal = 0 + shipping 5
     });
 
     it('should throw NotFoundException for missing order', async () => {

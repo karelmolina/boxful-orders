@@ -20,6 +20,7 @@ export class InMemoryOrdersRepository implements IOrdersRepository {
     const order: Order = {
       id: crypto.randomUUID(),
       userId: data.userId ?? null,
+      pickupAddress: data.pickupAddress,
       recipient: data.recipient,
       products: data.products,
       isCOD: data.isCOD,
