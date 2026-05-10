@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsIn, IsNumber, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsIn, IsNumber, Min, IsOptional } from 'class-validator';
 
 export class UpdateStatusWebhookDto {
   @ApiProperty({ example: 'order-id-123' })
@@ -11,8 +11,9 @@ export class UpdateStatusWebhookDto {
   @IsIn(['DELIVERED', 'RETURNED'])
   status: string;
 
-  @ApiProperty({ example: 100.5 })
+  @ApiPropertyOptional({ example: 100.5 })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  actualRecollectedAmount: number;
+  actualRecollectedAmount?: number;
 }

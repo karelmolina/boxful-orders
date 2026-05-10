@@ -37,8 +37,8 @@ export class OrdersService {
       ? Math.min(productTotal * 0.0001, MAX_COD_COMMISSION)
       : 0;
     const settlementAmount = dto.isCOD
-      ? productTotal + shippingCost - commissionCOD
-      : productTotal + shippingCost;
+      ? productTotal - shippingCost - commissionCOD
+      : -shippingCost;
 
     return this.ordersRepository.create({
       userId: dto.userId,
@@ -80,13 +80,17 @@ export class OrdersService {
     const order = await this.findById(dto.orderId);
     let settlementAmount = order.settlementAmount;
 
-    if (dto.status === 'DELIVERED' && order.isCOD) {
+    if (
+      dto.status === 'DELIVERED' &&
+      order.isCOD &&
+      dto.actualRecollectedAmount !== undefined
+    ) {
       const commissionCOD = Math.min(
         dto.actualRecollectedAmount * 0.0001,
         MAX_COD_COMMISSION,
       );
       settlementAmount =
-        dto.actualRecollectedAmount + order.shippingCost - commissionCOD;
+        dto.actualRecollectedAmount - order.shippingCost - commissionCOD;
     }
 
     return this.ordersRepository.updateStatusAndSettlement(dto.orderId, {

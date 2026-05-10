@@ -121,7 +121,7 @@ describe('OrdersService', () => {
       repository.seedShippingCost(1, 5.0);
       const order = await service.create(baseDto);
       expect(order.shippingCost).toBe(5.0);
-      expect(order.settlementAmount).toBe(5.0); // expectedAmount is undefined so productTotal = 0 + shipping 5
+      expect(order.settlementAmount).toBe(-5.0); // no COD → settlement = -shippingCost
       expect(order.commissionCOD).toBe(0);
       expect(order.status).toBe('PENDING');
     });
@@ -135,7 +135,7 @@ describe('OrdersService', () => {
       };
       const order = await service.create(dto);
       expect(order.commissionCOD).toBe(25.0);
-      expect(order.settlementAmount).toBeCloseTo(1_000_000.0 + 5.0 - 25.0, 5);
+      expect(order.settlementAmount).toBeCloseTo(1_000_000.0 - 5.0 - 25.0, 5);
     });
 
     it('should create COD order with commission at 0.01% when below cap', async () => {
@@ -147,7 +147,7 @@ describe('OrdersService', () => {
       };
       const order = await service.create(dto);
       expect(order.commissionCOD).toBeCloseTo(0.01, 5);
-      expect(order.settlementAmount).toBeCloseTo(100.0 + 5.0 - 0.01, 5);
+      expect(order.settlementAmount).toBeCloseTo(100.0 - 5.0 - 0.01, 5);
     });
 
     it('should throw BadRequestException when shipping cost not found', async () => {
@@ -218,7 +218,7 @@ describe('OrdersService', () => {
       const updated = await service.updateStatusFromWebhook(dto);
       expect(updated.status).toBe('DELIVERED');
       expect(updated.actualRecollectedAmount).toBe(8000.0);
-      expect(updated.settlementAmount).toBeCloseTo(8000.0 + 5.0 - 0.8, 5);
+      expect(updated.settlementAmount).toBeCloseTo(8000.0 - 5.0 - 0.8, 5);
     });
 
     it('should not change settlement for non-COD order', async () => {
@@ -231,7 +231,7 @@ describe('OrdersService', () => {
       };
       const updated = await service.updateStatusFromWebhook(dto);
       expect(updated.status).toBe('DELIVERED');
-      expect(updated.settlementAmount).toBe(5.0); // expectedAmount is undefined so productTotal = 0 + shipping 5
+      expect(updated.settlementAmount).toBe(-5.0); // non-COD stays negative
     });
 
     it('should throw NotFoundException for missing order', async () => {

@@ -61,7 +61,7 @@ async function seedOrders(userId: string) {
     MAX_COD_COMMISSION,
   );
   const order1SettlementAmount =
-    order1ExpectedAmount + order1ShippingCost - order1CommissionCOD;
+    order1ExpectedAmount - order1ShippingCost - order1CommissionCOD;
 
   await prisma.order.create({
     data: {
@@ -107,7 +107,7 @@ async function seedOrders(userId: string) {
   const order2ShippingCost = 7.0; // Saturday (day 6)
   const order2CommissionCOD = 0;
   const order2SettlementAmount =
-    order2ExpectedAmount + order2ShippingCost - order2CommissionCOD;
+    -order2ShippingCost;
 
   await prisma.order.create({
     data: {
