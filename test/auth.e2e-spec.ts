@@ -41,6 +41,7 @@ describe('AuthController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
@@ -52,10 +53,10 @@ describe('AuthController (e2e)', () => {
     await app.close();
   });
 
-  describe('POST /auth/register', () => {
+  describe('POST /api/auth/register', () => {
     it('should register a new user', () => {
       return request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send(validRegisterPayload)
         .expect(201)
         .expect((res) => {
@@ -70,14 +71,14 @@ describe('AuthController (e2e)', () => {
 
     it('should return 400 for invalid email', () => {
       return request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ ...validRegisterPayload, email: 'not-an-email' })
         .expect(400);
     });
 
     it('should return 400 for short password', () => {
       return request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({
           ...validRegisterPayload,
           password: 'short',
@@ -88,32 +89,32 @@ describe('AuthController (e2e)', () => {
 
     it('should return 400 when passwords do not match', () => {
       return request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ ...validRegisterPayload, confirmPassword: 'DifferentPass' })
         .expect(400);
     });
 
     it('should return 409 for duplicate email', async () => {
       await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send(validRegisterPayload)
         .expect(201);
 
       return request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ ...validRegisterPayload, email: 'alice@example.com' })
         .expect(409);
     });
   });
 
-  describe('POST /auth/login', () => {
+  describe('POST /api/auth/login', () => {
     it('should return access_token on valid credentials', async () => {
       await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send(validRegisterPayload);
 
       const response = await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: 'alice@example.com', password: 'Secure123' })
         .expect(200);
 
@@ -123,24 +124,24 @@ describe('AuthController (e2e)', () => {
 
     it('should return 401 for wrong password', async () => {
       await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send(validRegisterPayload);
 
       return request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: 'alice@example.com', password: 'WrongPass' })
         .expect(401);
     });
 
     it('should return 401 for non-existent user', () => {
       return request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: 'nobody@example.com', password: 'Secure123' })
         .expect(401);
     });
   });
 
-  describe('GET /auth/profile', () => {
+  describe('GET /api/auth/profile', () => {
     it('should return 200 and user email with valid Bearer token', async () => {
       const token = await getAuthToken(
         app,
@@ -149,7 +150,7 @@ describe('AuthController (e2e)', () => {
       );
 
       const response = await request(app.getHttpServer())
-        .get('/auth/profile')
+        .get('/api/auth/profile')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -157,19 +158,19 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should return 401 without token', () => {
-      return request(app.getHttpServer()).get('/auth/profile').expect(401);
+      return request(app.getHttpServer()).get('/api/auth/profile').expect(401);
     });
 
     it('should return 401 with Bearer invalid-token', () => {
       return request(app.getHttpServer())
-        .get('/auth/profile')
+        .get('/api/auth/profile')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
     });
 
     it('should return 401 with malformed Authorization header', () => {
       return request(app.getHttpServer())
-        .get('/auth/profile')
+        .get('/api/auth/profile')
         .set('Authorization', 'NotBearer token')
         .expect(401);
     });
@@ -177,7 +178,7 @@ describe('AuthController (e2e)', () => {
 
   describe('Public routes', () => {
     it('should allow access to public route without token', () => {
-      return request(app.getHttpServer()).get('/').expect(200);
+      return request(app.getHttpServer()).get('/api').expect(200);
     });
   });
 });

@@ -43,6 +43,7 @@ describe('Orders Webhook (e2e)', () => {
       moduleFixture.get<InMemoryOrdersRepository>(ORDERS_REPOSITORY);
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
@@ -54,7 +55,7 @@ describe('Orders Webhook (e2e)', () => {
     await app.close();
   });
 
-  describe('PATCH /orders/webhook/update-status', () => {
+  describe('PATCH /api/orders/webhook/update-status', () => {
     it('should recalculate settlement for COD DELIVERED', async () => {
       // Seed shipping cost for Monday (day 1)
       inMemoryRepo.seedShippingCost(1, 5.0);
@@ -66,7 +67,7 @@ describe('Orders Webhook (e2e)', () => {
         'Secure123!',
       );
       const createRes = await request(app.getHttpServer())
-        .post('/orders')
+        .post('/api/orders')
         .set('Authorization', `Bearer ${token}`)
         .send({
           recipient: {
@@ -92,7 +93,7 @@ describe('Orders Webhook (e2e)', () => {
 
       // Call webhook
       const webhookRes = await request(app.getHttpServer())
-        .patch('/orders/webhook/update-status')
+        .patch('/api/orders/webhook/update-status')
         .send({
           orderId,
           status: 'DELIVERED',
@@ -117,7 +118,7 @@ describe('Orders Webhook (e2e)', () => {
         'Secure123!',
       );
       const createRes = await request(app.getHttpServer())
-        .post('/orders')
+        .post('/api/orders')
         .set('Authorization', `Bearer ${token}`)
         .send({
           recipient: {
@@ -141,7 +142,7 @@ describe('Orders Webhook (e2e)', () => {
       const originalSettlement = createRes.body.settlementAmount;
 
       const webhookRes = await request(app.getHttpServer())
-        .patch('/orders/webhook/update-status')
+        .patch('/api/orders/webhook/update-status')
         .send({
           orderId,
           status: 'DELIVERED',
@@ -155,7 +156,7 @@ describe('Orders Webhook (e2e)', () => {
 
     it('should return 400 for invalid webhook payload', async () => {
       await request(app.getHttpServer())
-        .patch('/orders/webhook/update-status')
+        .patch('/api/orders/webhook/update-status')
         .send({
           orderId: 'not-a-valid-id',
           status: 'INVALID',

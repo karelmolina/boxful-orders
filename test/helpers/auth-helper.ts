@@ -6,7 +6,7 @@ export async function getAuthToken(
   email = 'test@example.com',
   password = 'Secure123!',
 ): Promise<string> {
-  await request(app.getHttpServer()).post('/auth/register').send({
+  await request(app.getHttpServer()).post('/api/auth/register').send({
     firstName: 'Test',
     lastName: 'User',
     gender: 'other',
@@ -18,7 +18,7 @@ export async function getAuthToken(
   });
 
   const response = await request(app.getHttpServer())
-    .post('/auth/login')
+    .post('/api/auth/login')
     .send({ email, password });
 
   return response.body.access_token;
