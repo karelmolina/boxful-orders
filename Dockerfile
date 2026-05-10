@@ -5,7 +5,7 @@ WORKDIR /app
 # Instalar herramientas de compilación necesarias para dependencias nativas (bcrypt, etc.)
 RUN apk add --no-cache python3 make g++
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.33.4
 
 COPY package.json pnpm-lock.yaml .npmrc ./
 COPY prisma ./prisma

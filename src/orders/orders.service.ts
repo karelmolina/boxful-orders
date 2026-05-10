@@ -102,8 +102,10 @@ export class OrdersService {
     let codOrdersCount = 0;
     let nonCodOrdersCount = 0;
 
+    const INCLUDED_STATUSES = ['PENDING', 'IN_TRANSIT', 'DELIVERED'];
+
     for (const order of orders) {
-      if (order.status === 'CANCELLED') continue;
+      if (!INCLUDED_STATUSES.includes(order.status)) continue;
 
       totalSettlement += order.settlementAmount;
       totalShippingCosts += order.shippingCost;
