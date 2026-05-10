@@ -13,6 +13,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateStatusWebhookDto } from './dto/update-status-webhook.dto';
 import { SettlementBreakdownDto } from './dto/settlement-breakdown.dto';
 import { TotalSettlementDto } from './dto/total-settlement.dto';
+import { stringify } from 'csv-stringify/sync';
 
 const MAX_COD_COMMISSION = 25.0;
 
@@ -58,6 +59,63 @@ export class OrdersService {
     return this.ordersRepository.findAll();
   }
 
+  async downloadCsv(): Promise<string> {
+    const orders = await this.findAll();
+    const rows = orders.map((order) => ({
+      id: order.id,
+      userId: order.userId ?? '',
+      pickupAddress: order.pickupAddress,
+      recipientName: order.recipient.name,
+      recipientPhone: order.recipient.phone,
+      recipientEmail: order.recipient.email,
+      recipientAddress: order.recipient.address,
+      recipientCity: order.recipient.city,
+      recipientState: order.recipient.state,
+      recipientZipCode: order.recipient.zipCode,
+      recipientReferencePoint: order.recipient.referencePoint ?? '',
+      recipientInstructions: order.recipient.instructions ?? '',
+      products: JSON.stringify(order.products),
+      isCOD: String(order.isCOD),
+      deliveryDate: order.deliveryDate.toISOString(),
+      shippingType: order.shippingType,
+      status: order.status,
+      shippingCost: String(order.shippingCost),
+      commissionCOD: String(order.commissionCOD),
+      settlementAmount: String(order.settlementAmount),
+      actualRecollectedAmount: order.actualRecollectedAmount ?? '',
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+    }));
+    return stringify(rows, {
+      header: true,
+      columns: [
+        { key: 'id', header: 'id' },
+        { key: 'userId', header: 'userId' },
+        { key: 'pickupAddress', header: 'pickupAddress' },
+        { key: 'recipientName', header: 'recipientName' },
+        { key: 'recipientPhone', header: 'recipientPhone' },
+        { key: 'recipientEmail', header: 'recipientEmail' },
+        { key: 'recipientAddress', header: 'recipientAddress' },
+        { key: 'recipientCity', header: 'recipientCity' },
+        { key: 'recipientState', header: 'recipientState' },
+        { key: 'recipientZipCode', header: 'recipientZipCode' },
+        { key: 'recipientReferencePoint', header: 'recipientReferencePoint' },
+        { key: 'recipientInstructions', header: 'recipientInstructions' },
+        { key: 'products', header: 'products' },
+        { key: 'isCOD', header: 'isCOD' },
+        { key: 'deliveryDate', header: 'deliveryDate' },
+        { key: 'shippingType', header: 'shippingType' },
+        { key: 'status', header: 'status' },
+        { key: 'shippingCost', header: 'shippingCost' },
+        { key: 'commissionCOD', header: 'commissionCOD' },
+        { key: 'settlementAmount', header: 'settlementAmount' },
+        { key: 'actualRecollectedAmount', header: 'actualRecollectedAmount' },
+        { key: 'createdAt', header: 'createdAt' },
+        { key: 'updatedAt', header: 'updatedAt' },
+      ],
+    });
+  }
+
   async findById(id: string): Promise<Order> {
     const order = await this.ordersRepository.findById(id);
     if (!order) {
@@ -69,8 +127,11 @@ export class OrdersService {
   async getSettlement(id: string): Promise<SettlementBreakdownDto> {
     const order = await this.findById(id);
 
-    const collectedAmount = order.actualRecollectedAmount ??
-      (order.isCOD ? order.settlementAmount + order.shippingCost + order.commissionCOD : 0);
+    const collectedAmount =
+      order.actualRecollectedAmount ??
+      (order.isCOD
+        ? order.settlementAmount + order.shippingCost + order.commissionCOD
+        : 0);
 
     const expenses: SettlementBreakdownDto['expenses'] = [
       { concept: 'Costo de envío', amount: -order.shippingCost },
@@ -113,8 +174,9 @@ export class OrdersService {
 
       if (order.isCOD) {
         codOrdersCount++;
-        totalCollected += order.actualRecollectedAmount ??
-          (order.settlementAmount + order.shippingCost + order.commissionCOD);
+        totalCollected +=
+          order.actualRecollectedAmount ??
+          order.settlementAmount + order.shippingCost + order.commissionCOD;
       } else {
         nonCodOrdersCount++;
       }

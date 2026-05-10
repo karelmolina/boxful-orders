@@ -1,19 +1,48 @@
 services:
-  mongodb:
-    image: docker.io/bitnami/mongodb:latest
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - MONGODB_REPLICA_SET_MODE=primary
-      - MONGODB_REPLICA_SET_NAME=rs0
-      - MONGODB_ADVERTISED_HOSTNAME=localhost
-      - MONGODB_SYSTEM_LOG_VERBOSITY=0
-      - MONGODB_DISABLE_SYSTEM_LOG=false
-    ports:
-      - '${MONGODB_PORT:-27017}:27017'
-    volumes:
-      - 'mongodb_data:/bitnami/mongodb'
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: boxfull-orders-api
     restart: unless-stopped
+    ports:
+      - "${PORT:-3001}:${PORT:-3001}"
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-3001}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
+      - DATABASE_URL=${DATABASE_URL:-mongodb://mongodb:27017/boxfull-orders?replicaSet=rs0}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - boxfull-network
+
+  mongodb:
+    image: mongo:7
+    container_name: boxfull-orders-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=boxfull-orders
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      retries: 30
+      start_period: 0s
+      start_interval: 1s
+    networks:
+      - boxfull-network
 
 volumes:
   mongodb_data:
-    driver: local
+
+networks:
+  boxfull-network:
+    driver: bridge

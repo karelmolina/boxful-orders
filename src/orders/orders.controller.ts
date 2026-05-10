@@ -7,6 +7,7 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,6 +15,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateStatusWebhookDto } from './dto/update-status-webhook.dto';
@@ -42,6 +44,16 @@ export class OrdersController {
     return this.ordersService.findAll();
   }
 
+  @Get('download/csv')
+  @ApiOperation({ summary: 'Download all orders as CSV' })
+  @ApiResponse({ status: 200, description: 'Returns CSV file' })
+  async downloadCsv(@Res() res: Response) {
+    const csv = await this.ordersService.downloadCsv();
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=orders.csv');
+    res.status(200).send(csv);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiResponse({ status: 200, description: 'Returns order details' })
@@ -51,14 +63,22 @@ export class OrdersController {
 
   @Get(':id/settlement')
   @ApiOperation({ summary: 'Get settlement breakdown for an order' })
-  @ApiResponse({ status: 200, description: 'Returns settlement breakdown', type: SettlementBreakdownDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns settlement breakdown',
+    type: SettlementBreakdownDto,
+  })
   async getSettlement(@Param('id') id: string) {
     return this.ordersService.getSettlement(id);
   }
 
   @Get('settlement/total')
   @ApiOperation({ summary: 'Get total settlement across all orders' })
-  @ApiResponse({ status: 200, description: 'Returns total settlement summary', type: TotalSettlementDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns total settlement summary',
+    type: TotalSettlementDto,
+  })
   async getTotalSettlement() {
     return this.ordersService.getTotalSettlement();
   }

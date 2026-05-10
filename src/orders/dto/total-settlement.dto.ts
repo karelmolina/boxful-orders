@@ -7,10 +7,10 @@ export class TotalSettlementDto {
   @ApiProperty({ example: 2450.75 })
   totalSettlement: number;
 
-  @ApiProperty({ example: 3000.00 })
+  @ApiProperty({ example: 3000.0 })
   totalCollected: number;
 
-  @ApiProperty({ example: 525.00 })
+  @ApiProperty({ example: 525.0 })
   totalShippingCosts: number;
 
   @ApiProperty({ example: 24.25 })

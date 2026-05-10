@@ -15,6 +15,7 @@ describe('OrdersController', () => {
       findById: jest.fn(),
       cancel: jest.fn(),
       updateStatusFromWebhook: jest.fn(),
+      downloadCsv: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -135,6 +136,42 @@ describe('OrdersController', () => {
       const result = await controller.updateStatusWebhook(dto);
       expect(service.updateStatusFromWebhook).toHaveBeenCalledWith(dto);
       expect(result).toEqual(mockOrder);
+    });
+  });
+
+  describe('GET /orders/download/csv', () => {
+    it('should set headers and send CSV', async () => {
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+      (service.downloadCsv as jest.Mock).mockResolvedValue('csv-content');
+      await controller.downloadCsv(res as any);
+      expect(service.downloadCsv).toHaveBeenCalled();
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'text/csv; charset=utf-8',
+      );
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Content-Disposition',
+        'attachment; filename=orders.csv',
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith('csv-content');
+    });
+
+    it('should propagate errors from service', async () => {
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+      const error = new Error('CSV generation failed');
+      (service.downloadCsv as jest.Mock).mockRejectedValue(error);
+      await expect(controller.downloadCsv(res as any)).rejects.toThrow(
+        'CSV generation failed',
+      );
     });
   });
 });

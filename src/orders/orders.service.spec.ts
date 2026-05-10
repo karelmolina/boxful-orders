@@ -250,4 +250,116 @@ describe('OrdersService', () => {
       );
     });
   });
+
+  describe('downloadCsv', () => {
+    it('should return CSV with correct headers and order data', async () => {
+      const order: Order = {
+        id: 'order-1',
+        userId: 'user-1',
+        pickupAddress: '123 Pickup St',
+        recipient: {
+          name: 'Alice',
+          phone: '+50377777777',
+          email: 'alice@example.com',
+          address: '123 Main St',
+          city: 'City',
+          state: 'State',
+          zipCode: '12345',
+          referencePoint: 'Near park',
+          instructions: 'Call first',
+        },
+        products: [
+          { length: 15, height: 15, width: 15, weight: 3, content: 'Widget' },
+        ],
+        isCOD: true,
+        deliveryDate: new Date('2026-05-10T00:00:00.000Z'),
+        shippingType: 'STANDARD',
+        status: 'PENDING',
+        shippingCost: 5.0,
+        commissionCOD: 0,
+        settlementAmount: 95.0,
+        actualRecollectedAmount: null,
+        createdAt: new Date('2026-05-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-05-02T00:00:00.000Z'),
+      };
+      repository['orders'].push(order);
+
+      const csv = await service.downloadCsv();
+      const lines = csv.trim().split('\n');
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toBe(
+        'id,userId,pickupAddress,recipientName,recipientPhone,recipientEmail,recipientAddress,recipientCity,recipientState,recipientZipCode,recipientReferencePoint,recipientInstructions,products,isCOD,deliveryDate,shippingType,status,shippingCost,commissionCOD,settlementAmount,actualRecollectedAmount,createdAt,updatedAt',
+      );
+      expect(lines[1]).toContain('order-1');
+      expect(lines[1]).toContain('user-1');
+      expect(lines[1]).toContain('123 Pickup St');
+      expect(lines[1]).toContain('Alice');
+      expect(lines[1]).toContain('+50377777777');
+      expect(lines[1]).toContain('alice@example.com');
+      expect(lines[1]).toContain('123 Main St');
+      expect(lines[1]).toContain('City');
+      expect(lines[1]).toContain('State');
+      expect(lines[1]).toContain('12345');
+      expect(lines[1]).toContain('Near park');
+      expect(lines[1]).toContain('Call first');
+      expect(lines[1]).toContain('"[{""length"":15');
+      expect(lines[1]).toContain('true');
+      expect(lines[1]).toContain('2026-05-10T00:00:00.000Z');
+      expect(lines[1]).toContain('STANDARD');
+      expect(lines[1]).toContain('PENDING');
+      expect(lines[1]).toContain('5');
+      expect(lines[1]).toContain('0');
+      expect(lines[1]).toContain('95');
+      expect(lines[1]).toContain('2026-05-01T00:00:00.000Z');
+      expect(lines[1]).toContain('2026-05-02T00:00:00.000Z');
+    });
+
+    it('should return header-only CSV when no orders exist', async () => {
+      const csv = await service.downloadCsv();
+      const lines = csv.trim().split('\n');
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toBe(
+        'id,userId,pickupAddress,recipientName,recipientPhone,recipientEmail,recipientAddress,recipientCity,recipientState,recipientZipCode,recipientReferencePoint,recipientInstructions,products,isCOD,deliveryDate,shippingType,status,shippingCost,commissionCOD,settlementAmount,actualRecollectedAmount,createdAt,updatedAt',
+      );
+    });
+
+    it('should render null values as empty strings', async () => {
+      const order: Order = {
+        id: 'order-2',
+        userId: null,
+        pickupAddress: '456 Pickup Ave',
+        recipient: {
+          name: 'Bob',
+          phone: '+50388888888',
+          email: 'bob@example.com',
+          address: '456 Side St',
+          city: 'Town',
+          state: 'TS',
+          zipCode: '67890',
+        },
+        products: [],
+        isCOD: false,
+        deliveryDate: new Date('2026-06-15T00:00:00.000Z'),
+        shippingType: 'EXPRESS',
+        status: 'DELIVERED',
+        shippingCost: 10.0,
+        commissionCOD: 2.5,
+        settlementAmount: 87.5,
+        actualRecollectedAmount: null,
+        createdAt: new Date('2026-06-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-06-10T00:00:00.000Z'),
+      };
+      repository['orders'].push(order);
+
+      const csv = await service.downloadCsv();
+      const lines = csv.trim().split('\n');
+      expect(lines).toHaveLength(2);
+      const dataLine = lines[1];
+      const columns = dataLine.split(',');
+      // userId is the 2nd column (index 1)
+      expect(columns[1]).toBe('');
+      // actualRecollectedAmount is the 21st column (index 20)
+      expect(columns[20]).toBe('');
+    });
+  });
 });
